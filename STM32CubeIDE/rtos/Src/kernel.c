@@ -82,11 +82,8 @@
 #define BLOCKED				0xFFU
 
 /* Function prototypes */
-void idle_task_handler(void);	/* Task 1 */
-void task1_handler(void);		/* Task 1 */
-void task2_handler(void);		/* Task 2 */
-void task3_handler(void);		/* Task 3 */
-void task4_handler(void);		/* Task 4 */
+void idle_task_handler(void);	/* Idle task */
+
 
 /* Global variables */
 uint8_t curr_task = 1;	/* Denotes the current task running on the CPU (Initialize to Task 1) */
@@ -135,7 +132,7 @@ void task_delay(uint32_t tick_count)
 }
 
 /* Initializes SysTick Timer */
-void systick_timer_init(uint32_t tick_hz)
+void init_systick_timer(uint32_t tick_hz)
 {
 	uint32_t start_val = (SYSTICK_TIM_CLK / tick_hz) - 1;
 
@@ -153,7 +150,7 @@ void systick_timer_init(uint32_t tick_hz)
 }
 
 /* Initializes stack of scheduler */
-__attribute__((naked)) void sched_stack_init(uint32_t sched_top_of_stack)
+__attribute__((naked)) void init_sched_stack(uint32_t sched_top_of_stack)
 {
 	//__asm volatile("msr msp, r0");
 	__asm volatile("msr msp, %0": : "r" (sched_top_of_stack) : );
@@ -184,8 +181,10 @@ __attribute__((naked)) void set_sp_to_psp(void)
 	__asm volatile("bx lr");
 }
 
-/* Initializes tasks */
-void tasks_init()
+void create_tasks(void (*t1_handler)(void),
+				  void (*t2_handler)(void),
+				  void (*t3_handler)(void),
+				  void (*t4_handler)(void))
 {
 	tcbs[0].state = READY;	/* State of the idle task must always be READY */
 	tcbs[1].state = READY;
@@ -200,10 +199,10 @@ void tasks_init()
 	tcbs[4].psp = T4_STACK_START;
 
 	tcbs[0].task_handler = idle_task_handler;
-	tcbs[1].task_handler = task1_handler;
-	tcbs[2].task_handler = task2_handler;
-	tcbs[3].task_handler = task3_handler;
-	tcbs[4].task_handler = task4_handler;
+	tcbs[1].task_handler = t1_handler;
+	tcbs[2].task_handler = t2_handler;
+	tcbs[3].task_handler = t3_handler;
+	tcbs[4].task_handler = t4_handler;
 
 	/* ARM Cortex-M4 processor stack model: Full-Descending */
 
@@ -231,12 +230,15 @@ void tasks_init()
 			   0xFFFFFFFD: Return to Thread mode, exception return uses non-floating point state from the PSP
 			   and execution uses PSP after return. -> Matches our environment! */
 
-		/* Set r0-r12 to 0 */
+		/* Set r0-r12 to 0 (optional) */
+		/*
 		for (int j = 0; j < 13; j++)
 		{
 			p_psp--;
-			*p_psp = 0;
+			// *p_psp = 0; // Don't know why this is setting p_psp to 0. (Debug needed)
 		}
+		*/
+		p_psp -= 13;
 
 		/* Save the taks's PSP value for later use */
 		tcbs[i].psp = (uint32_t)p_psp;
@@ -297,7 +299,7 @@ __attribute__((naked)) void PendSV_Handler(void)
 	/* 3. Save the updated PSP of the current task */
 	__asm volatile("push {lr}");
 		/* Secure LR before making a nested subroutine call. Here LR contains
-		   (EXC_RETURN[31:0] - 0xFFFFFFFD) that is updated at the exception engry sequence. */
+		   (EXC_RETURN[31:0] - 0xFFFFFFFD) that is updated at the exception entry sequence. */
 	__asm volatile("bl save_psp");
 
 	/*************************************************************************************
@@ -312,7 +314,7 @@ __attribute__((naked)) void PendSV_Handler(void)
 
 	/* 3. Restore SF2(r4-r11) of the next task by using its PSP */
 	__asm volatile("ldmia r0!, {r4-r11}");	/* Memory to register */
-		/* LDMIA: LoaD Multiple registers. Iecrement address After each access.
+		/* LDMIA: LoaD Multiple registers. Increment address After each access.
 		   !	: An optional writeback suffix. If ! is present the final address,
 				  that is loaded from or stored to, is written back into the base register.
 				  In this case, r0. */
@@ -394,19 +396,18 @@ void BusFault_Handler(void)
 	while (1);
 }
 
-void kernel_init(void)
+void start_kernel(void)
 {
 	enable_processor_faults();
 
-	sched_stack_init(SCHED_STACK_START);
+	init_sched_stack(SCHED_STACK_START);
 
-	tasks_init();
-
-	systick_timer_init(TICK_HZ);
+	init_systick_timer(TICK_HZ);
 
 	set_sp_to_psp();
 
-	task1_handler();
+	/* Invoke task1_handler */
+	(tcbs[1].task_handler)();
 }
 
 /* Idle task handler */
@@ -416,51 +417,5 @@ void idle_task_handler(void)
 	while (1);
 }
 
-/* Task 1 handler */
-void task1_handler(void)
-{
-	while (1)
-	{
-		led_green_on();
-		task_delay(1000);
-		led_green_off();
-		task_delay(1000);
-	}
-}
 
-/* Task 2 handler */
-void task2_handler(void)
-{
-	while (1)
-	{
-		led_orange_on();
-		task_delay(500);
-		led_orange_off();
-		task_delay(500);
-	}
-}
-
-/* Task 3 handler */
-void task3_handler(void)
-{
-	while (1)
-	{
-		led_blue_on();
-		task_delay(250);
-		led_blue_off();
-		task_delay(250);
-	}
-}
-
-/* Task 4 handler */
-void task4_handler(void)
-{
-	while (1)
-	{
-		led_red_on();
-		task_delay(125);
-		led_red_off();
-		task_delay(125);
-	}
-}
 

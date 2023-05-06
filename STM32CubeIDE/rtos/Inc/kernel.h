@@ -8,12 +8,14 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
-void kernel_init();
+void start_kernel(void);
+
 void create_tasks(void (*t1_handler)(void),
 				  void (*t2_handler)(void),
 				  void (*t3_handler)(void),
 				  void (*t4_handler)(void));
 
+void task_delay(uint32_t tick_count);
 
 
 #endif
