@@ -10,85 +10,9 @@
 #include "kernel.h"
 #include "led.h"
 
-/* Stack memory information */
-#define SIZE_TASK_STACK		1024U
-#define SIZE_SCHED_STACK	1024U
-#define SRAM_START			0x20000000U
-#define SIZE_SRAM			((128) * (1024))
-#define SRAM_END			((SRAM_START) + (SIZE_SRAM))
-
-#define IDLE_STACK_START	SRAM_END
-#define T1_STACK_START		((SRAM_END) - (1 * (SIZE_TASK_STACK)))
-#define T2_STACK_START		((SRAM_END) - (2 * (SIZE_TASK_STACK)))
-#define T3_STACK_START		((SRAM_END) - (3 * (SIZE_TASK_STACK)))
-#define T4_STACK_START		((SRAM_END) - (4 * (SIZE_TASK_STACK)))
-#define SCHED_STACK_START	((SRAM_END) - (5 * (SIZE_TASK_STACK)))
-
-/* System timer registers */
-/* SysTick Reload Value Register (Stores 24-bit down counter START value) */
-#define SYST_RVR			(*(uint32_t volatile *)0xE000E014)
-/* SysTick Control and Status Register */
-#define SYST_CSR			(*(uint32_t volatile *)0xE000E010)
-#define ENABLE				(1 << 0U) /* Counter enabled */
-#define TICKINT				(1 << 1U) /* Counting down to zero asserts the SysTick exception request */
-#define CLKSOURCE			(1 << 2U) /* Processor clock */
-
-/* PendSV */
-/* Interrupt Control and State Register (ICSR) */
-#define ICSR				(*(uint32_t volatile *)0xE000ED04)
-#define PENDSVSET			(1 << 28U)	/* Change PendSV exception state to pending */
-
-/* Disable interrupts */
-#define DISABLE_INTERRUPTS()	do { __asm volatile ("CPSID i"); } while (0)
-	/* To disable interrupts for ARM Cortex-M4 processor, you can use the "CPSID i" assembly instruction.
-	   This instruction sets the "PRIMASK" register to disable all interrupts, including the non-maskable
-	   interrupt (NMI). */
-	/* The do-while loop construct ensures that the macro expands to a single statement,
-	   even if it is used in a context where multiple statements are expected
-	   (e.g., as the body of an if statement). The while (0) part of the loop is there to ensure that
-	   the macro can be used safely in compound statements without generating syntax errors. */
-	/* Another way of writing DISABLE_INTERRUPTS() is as follows:
-	   do { __asm volatile ("mov r0, #0x1"); asm volatile ("mrs primask, r0"); } while (0)
-	   In this case, using do-while statement helps ensuring that the compound statements in the body
-	   expand to a single statement, as we put parens around every single macro variables. */
-/* Enable interrupts */
-#define ENABLE_INTERRUPTS() 	do { __asm volatile ("CPSIE i"); } while (0)
-	/* Another way of writing DISABLE_INTERRUPTS() is as follows:
-	   do { __asm volatile ("mov r0, #0x0"); asm volatile ("mrs primask, r0"); } while (0)  */
-
-/* Clock */
-#define HSI_CLK				16000000U
-#define SYSTICK_TIM_CLK		HSI_CLK		/* By default */
-
-/* SysTick Timer */
-#define TICK_HZ				1000U	/* Desired tick frequency */
-
-#define NUM_TASKS			5U
-#define DUMMY_XPSR			0x01000000U	/* Guarantee T-bit is set */
-
-/* System Handler Control and State Register (SHCRS); one of the System Control Block registers */
-#define	SHCSR				(*(uint32_t volatile *)0xE000ED24)
-#define USGFAULTENA			(1 << 18U)
-#define BUSFAULTENA			(1 << 17U)
-#define MEMFAULTENA			(1 << 16U)
-/* UsageFault Status Register (UFSR) - 16-bit register */
-#define UFSR				(*(uint32_t volatile *)0xE000ED2A)
-/* Configuration and Control Register */
-#define CCR					(*(uint32_t volatile *)0xE000ED14)
-#define DIV_0_TRP			(1 << 4U)
-
-/* Task States */
-#define READY				0x00U
-#define BLOCKED				0xFFU
-
-/* Function prototypes */
-void idle_task_handler(void);	/* Idle task */
-
-
 /* Global variables */
 uint8_t curr_task = 1;	/* Denotes the current task running on the CPU (Initialize to Task 1) */
 uint32_t global_tick_count;
-
 
 /* Structure for Task Control Blocks (TCBs) */
 typedef struct
@@ -101,6 +25,14 @@ typedef struct
 
 TCB_t tcbs[NUM_TASKS];
 
+/* Idle task handler */
+void idle_task_handler(void)
+{
+	/* Idle task will run only when all other user tasks are in BLOCKED state */
+	while (1);
+}
+
+/* Trigger context switching by setting the PendSV exception */
 void schedule(void)
 {
 	/* Pend the PendSV exception */
@@ -108,7 +40,7 @@ void schedule(void)
 }
 
 /* Blocks the task that calls this function for tick_count ticks */
-void task_delay(uint32_t tick_count)
+void block_task(uint32_t tick_count)
 {
 	/* To prevent race condition on global variables, make sure to globally disable interrupt */
 	DISABLE_INTERRUPTS();
@@ -186,6 +118,7 @@ void create_tasks(void (*t1_handler)(void),
 				  void (*t3_handler)(void),
 				  void (*t4_handler)(void))
 {
+	/* Initialize Task Control Blocks (TCBs) */
 	tcbs[0].state = READY;	/* State of the idle task must always be READY */
 	tcbs[1].state = READY;
 	tcbs[2].state = READY;
@@ -238,7 +171,7 @@ void create_tasks(void (*t1_handler)(void),
 			// *p_psp = 0; // Don't know why this is setting p_psp to 0. (Debug needed)
 		}
 		*/
-		p_psp -= 13;
+		p_psp -= 13;	/* space for r0-r12 */
 
 		/* Save the taks's PSP value for later use */
 		tcbs[i].psp = (uint32_t)p_psp;
@@ -273,6 +206,7 @@ void select_next_task()
 	}
 }
 
+/* Performs context switching */
 __attribute__((naked)) void PendSV_Handler(void)
 {
 	/* SF1(r0-r3, r12, lr, pc, xpsr) of the current task are automatically pushed onto its
@@ -330,11 +264,6 @@ __attribute__((naked)) void PendSV_Handler(void)
 	   stack and restored by the processor as exception EXIT sequence. (i.e., UnstackingG) */
 }
 
-void update_global_tick_count(void)
-{
-	global_tick_count++;
-}
-
 /* Checks all the tasks' states and unblock all the tasks that are qualified */
 void unblock_tasks(void)
 {
@@ -351,9 +280,12 @@ void unblock_tasks(void)
 	}
 }
 
+/* Increments the global tick count, unblocks qualified tasks, and pends the PendSV exception
+   to trigger context switching */
 void SysTick_Handler(void)
 {
-	update_global_tick_count();
+	/* Increment the global tick count */
+	global_tick_count++;
 
 	/* Checks all the tasks' states and unblock all the tasks that are qualified */
 	unblock_tasks();
@@ -396,6 +328,7 @@ void BusFault_Handler(void)
 	while (1);
 }
 
+/* Does necessary initializations and starts the kernel */
 void start_kernel(void)
 {
 	enable_processor_faults();
@@ -409,13 +342,3 @@ void start_kernel(void)
 	/* Invoke task1_handler */
 	(tcbs[1].task_handler)();
 }
-
-/* Idle task handler */
-void idle_task_handler(void)
-{
-	/* Idle task will run only when all other user tasks are in BLOCKED state */
-	while (1);
-}
-
-
-

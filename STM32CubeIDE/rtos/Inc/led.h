@@ -29,7 +29,6 @@
 #define GPIOD_BASE			0x40020C00U
 #define GPIOD_MODER			(*(uint32_t volatile *)(GPIOD_BASE + 0x00U))
 #define GPIOD_ODR			(*(uint32_t volatile *)(GPIOD_BASE + 0x14U))
-
 #define GPIODEN				(1U << 3)	/* IO port D clock enable */
 
 /* Delay */
@@ -39,8 +38,7 @@
 #define DELAY_COUNT_500MS	(500U * DELAY_COUNT_1MS)
 #define DELAY_COUNT_1000MS	(1000U * DELAY_COUNT_1MS)
 
-
-/* Interface */
+/* LED interface */
 void led_init(void);
 
 void led_green_on(void);
