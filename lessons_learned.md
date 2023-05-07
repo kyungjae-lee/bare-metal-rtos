@@ -25,7 +25,7 @@
 * Startup code is responsible for `.data` and `.bss` sections initialization in main memory. It needs to properly copy the `.data` section from FLASH to SRAM, and properly initialize the `.bss` section to SRAM.
 * Only after the initial environment is properly setup, the startup code can call the `main()`.
 
-* Also see [https://kyungjae.dev/embedded-systems-programming-arm/startup-file](https://kyungjae.dev/embedded-systems-programming-arm/startup-file).
+* For more information, see [https://kyungjae.dev/embedded-systems-programming-arm/startup-file](https://kyungjae.dev/embedded-systems-programming-arm/startup-file).
 
 
 
@@ -62,4 +62,4 @@
 
 
 
-* Also see [https://kyungjae.dev/embedded-systems-programming-arm/different-sections-of-a-program](https://kyungjae.dev/embedded-systems-programming-arm/different-sections-of-a-program).
+* For more information, see [https://kyungjae.dev/embedded-systems-programming-arm/different-sections-of-a-program](https://kyungjae.dev/embedded-systems-programming-arm/different-sections-of-a-program).
