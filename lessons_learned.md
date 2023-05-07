@@ -25,11 +25,13 @@
 
 
 
+* Also see [https://kyungjae.dev/embedded-systems-programming-arm/different-sections-of-a-program](https://kyungjae.dev/embedded-systems-programming-arm/different-sections-of-a-program).
+
+
+
 
 
 ## Different Data of a Program & Different Sections of Memory
-
-
 
 | Variable (Data)             | LOAD Time (LMA) | RUN Time (VMA) | Section | Remarks                                                      |
 | --------------------------- | --------------- | -------------- | ------- | ------------------------------------------------------------ |
@@ -51,3 +53,5 @@
 > **Global const** data do not need to consume RAM since they won't get updated during the run-time. So, no VMA or run-time address.
 >
 > Lifetime of **local static** variables is the duration of the program. Hence, they do not utilize stack!
+
+* Also see [https://kyungjae.dev/embedded-systems-programming-arm/different-sections-of-a-program](https://kyungjae.dev/embedded-systems-programming-arm/different-sections-of-a-program).
