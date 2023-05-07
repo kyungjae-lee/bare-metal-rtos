@@ -12,3 +12,11 @@
   * `arm-none-eabi-objdump`
   * `arm-none-eabi-readelf`
   * `arm-none-eabi-nm`
+
+
+
+## Startup File
+
+
+
+<img src="./img/transfer-of-data-section-to-ram.png" alt="transfer-of-data-section-to-ram" width="900">
