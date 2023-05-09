@@ -6,7 +6,16 @@
 
 #define STACK_START	SRAM_END
 
+/* Linker symbols */
+extern uint32_t _etext;		/* End of .text section */
+extern uint32_t _sdata;		/* Start of .data section */
+extern uint32_t _edata;		/* End of .data section */
+extern uint32_t _sbss;		/* start of .bss section */
+extern uint32_t _ebss;		/* End of .bss section */
+
 /* Function prototypes */
+
+int main(void);
 
 /* 
  * You don't need to define all (15 system exceptions + 82 interrupts) upfront. You can
@@ -234,4 +243,29 @@ void Default_Handler(void)
 
 void Reset_Handler(void)
 {
+	/* Copy .data section from FLASH to SRAM */
+	uint32_t size = (uint32_t)&_edata - (uint32_t)&_sdata;	
+
+	uint8_t *pDst = (uint8_t *)&_sdata;	/* SRAM */
+	uint8_t *pSrc = (uint8_t *)&_etext; /* FLASH */
+	
+	for (uint32_t i = 0; i < size; i++)
+	{
+		*pDst++ = *pSrc++;	
+	}
+
+	/* Initialize .bss section (in SRAM) to zero */
+	size = (uint32_t)&_ebss - (uint32_t)&_sbss;
+	pDst = (uint8_t *)&_sbss;
+
+	for (uint32_t i = 0; i < size; i++)
+	{
+		*pDst++ = 0;	/* Zero out .bss section */
+	}
+
+	/* Call init function of standard library (Required only when standard library
+	   functions are used in the project) */
+
+	/* Call main() */
+	main();
 }
