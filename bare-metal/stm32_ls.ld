@@ -23,7 +23,11 @@ SECTIONS
 	{
 		*(.isr_vector)	/* Put vector table at the beginning of code memory */
 		*(.text)		/* Merge all .text sections from all(*) input files */
+		*(.text.*)		/* merge if anything like '.text.<function_name>' gets generated */	
 		*(.rodata)		/* Merge all .rodata sections from all(*) input files */
+		*(.rodata.*)
+		*(.init) 		/* merge c standard library specific section into .text (not mandatory)*/
+		*(.fini) 		/* merge c standard library specific section into .text (not mandatory) */
 		. = ALIGN(4);	/* The location counter will be updated to the word (4 byte)
 						   aligned address. This is to force the word-alignment of the
 						   section ending. (Word-alignment of the section beginning will
@@ -44,6 +48,7 @@ SECTIONS
 	{
 		_sdata = .;	/* _sdata will now store the start addr of SRAM, 0x20000000 */
 		*(.data)
+		*(.data.*)
 		. = ALIGN(4);	/* Force word-boundary alignment for the section ending */
 		_edata = .;
 	}> SRAM AT> FLASH	/* VMA = SRAM, LMA = FLASH */
@@ -52,12 +57,17 @@ SECTIONS
 	.bss :
 	{
 		_sbss = .;
+		__bss_start__ = _sbss;
 		*(.bss)
+		*(.bss.*)
         *(COMMON) /* While analyzing the map file you found some data you epxpected to
                      be placed in the .bss section but somehow placed under a COMMON 
                      section created by the linker. This is how you bring it into
                      the the section you want it to be placed in. */
 		. = ALIGN(4);	/* Force word-boundary alignment for the section ending */
 		_ebss = .;
+		__bss_end__ = _ebss;
+		. = ALIGN (4);
+		end = .;	/* Added to resolve an error regarding the _sbrk in syscalls.c */
 	}> SRAM 	/* .bss does not need LMA since it does not get loded onto FLASH */
 }

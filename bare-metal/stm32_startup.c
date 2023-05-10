@@ -16,6 +16,7 @@ extern uint32_t _ebss;		/* End of .bss section */
 /* Function prototypes */
 
 int main(void);
+void __libc_init_array(void);	/* Initialize C standard library */
 
 /* 
  * You don't need to define all (15 system exceptions + 82 interrupts) upfront. You can
@@ -265,6 +266,7 @@ void Reset_Handler(void)
 
 	/* Call init function of standard library (Required only when standard library
 	   functions are used in the project) */
+	__libc_init_array();	/* Initialize C standard library */
 
 	/* Call main() */
 	main();

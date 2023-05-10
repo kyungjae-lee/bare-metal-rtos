@@ -19,6 +19,8 @@ void task4_handler(void);		/* Task 4 */
 
 int main(void)
 {
+	printf("Testing bare-metal RTOS\n");
+
 	/* Initialize LEDs */
 	led_init();
 

@@ -309,14 +309,14 @@ void enable_processor_faults(void)
 /* HardFault handler */
 void HardFault_Handler(void)
 {
-	//printf("Exception: HardFault\n");
+	printf("Exception: HardFault\n");
 	while (1);
 }
 
 /* MemManage handler */
 void MemManage_Handler(void)
 {
-	//printf("Exception: HardFault\n");
+	printf("Exception: HardFault\n");
 	while (1);
 }
 
@@ -324,7 +324,7 @@ void MemManage_Handler(void)
 void BusFault_Handler(void)
 {
 
-	//printf("Exception: BusFault\n");
+	printf("Exception: BusFault\n");
 	while (1);
 }
 
