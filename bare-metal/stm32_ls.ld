@@ -43,6 +43,9 @@ SECTIONS
 				   >(vma) AT>(lma), when vma=lma you can simply write >(vma) */
     			/* linker generates absolute address for VMA, LMA */
 	
+	_la_data = LOADADDR(.data);	/* LOADADDR is a linker command. The load address of .data
+								   section will be stored into the symbol _la_data. */
+
 	/* Initialized data */
 	.data :
 	{
@@ -69,5 +72,7 @@ SECTIONS
 		__bss_end__ = _ebss;
 		. = ALIGN (4);
 		end = .;	/* Added to resolve an error regarding the _sbrk in syscalls.c */
+		__end__ = .; /* Added to resolve an error regarding semihosting (semihosting
+						library needs this linker symbol */
 	}> SRAM 	/* .bss does not need LMA since it does not get loded onto FLASH */
 }

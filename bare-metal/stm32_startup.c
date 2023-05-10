@@ -12,6 +12,7 @@ extern uint32_t _sdata;		/* Start of .data section */
 extern uint32_t _edata;		/* End of .data section */
 extern uint32_t _sbss;		/* start of .bss section */
 extern uint32_t _ebss;		/* End of .bss section */
+extern uint32_t _la_data;	/* End of .bss section */
 
 /* Function prototypes */
 
@@ -248,7 +249,13 @@ void Reset_Handler(void)
 	uint32_t size = (uint32_t)&_edata - (uint32_t)&_sdata;	
 
 	uint8_t *pDst = (uint8_t *)&_sdata;	/* SRAM */
-	uint8_t *pSrc = (uint8_t *)&_etext; /* FLASH */
+	//uint8_t *pSrc = (uint8_t *)&_etext; /* FLASH */
+	uint8_t *pSrc = (uint8_t *)&_la_data; /* FLASH */
+		/* A separate linker symbol for 'end of .text address' has been used to resolve
+		   situation where extra sections for part of the C standard libraries are getting
+		   placed between the .data and .text section. (_etext may not be _edata in this
+		   case. (To find the corresponding measure in the linker script, find 'LOADADDR'.
+		   */
 	
 	for (uint32_t i = 0; i < size; i++)
 	{
