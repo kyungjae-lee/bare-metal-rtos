@@ -1,5 +1,5 @@
 # Bare-Metal RTOS
-Task scheduler development on the bare‐metal STM32F407‐Discovery board
+Real-time operating system development on the bare‐metal STM32F407‐Discovery board
 
 
 
