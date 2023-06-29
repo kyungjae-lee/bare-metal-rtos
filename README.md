@@ -1,5 +1,4 @@
 # Bare-Metal RTOS
-
 This repository contains the source code for the **Bare-Metal RTOS** development project.
 
 
