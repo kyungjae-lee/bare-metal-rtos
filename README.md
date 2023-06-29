@@ -1,5 +1,5 @@
 # Bare-Metal RTOS
-This repository contains the source code for the **Bare-Metal RTOS** development project.
+This repository contains the source code for the **Bare-Metal RTOS** development project. Visit "Bare-Metal RTOS" section on my website for more details: [https://kyungjae.dev/projects/bare-metal-rtos](https://kyungjae.dev/projects/bare-metal-rtos).
 
 
 
@@ -16,18 +16,3 @@ This repository contains the source code for the **Bare-Metal RTOS** development
 
 * Source code: [./bare-metal](./bare-metal)
 * Used **Vim** editor for software development, **GNU Arm Embedded Toolchain** for cross‐compiling, and **OpenOCD** with **GDB** client to load and debug the project on the target board
-
-
-
-## Demonstration
-
-Following is the demonstration of the test application for the 'Bare-Metal RTOS' project in action. 
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/MYxrrz4UWkc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-
-- Scheduling Algorithm: Round-Robin 
-- 4 tasks blinking each LED at a defined frequency:
-  - Green: 1000 ms 
-  - Orange: 500 ms 
-  - Blue: 250 ms
-  - Red: 125 ms
