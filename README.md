@@ -5,7 +5,7 @@ This repository contains the source code for the **Bare-Metal RTOS** development
 
 ## Introduction
 
-* Developed a real‐time operating system (RTOS) on the bare‐metal STM32F407‐Discovery board
+Developed a real‐time operating system (RTOS) on the bare‐metal STM32F407‐Discovery board
 
 ### 1. RTOS using STM32CubeIDE
 
