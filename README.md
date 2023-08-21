@@ -1,5 +1,5 @@
 # Bare-Metal RTOS
-This repository contains the source code for the **Bare-Metal RTOS** development project. Visit the "Bare-Metal RTOS" section on my website for more details: https://jackklee.com/projects/bare-metal-rtos.
+This repository contains the source code for the **Bare-Metal RTOS** development project. Visit the "Bare-Metal RTOS" section on my website for more details: https://jackklee.com/portfolio/bare-metal-rtos.
 
 
 
