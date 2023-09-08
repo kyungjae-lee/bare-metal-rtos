@@ -34,9 +34,7 @@ Developed a real‐time operating system (RTOS) on the bare‐metal STM32F407‐
 
 ## Demonstration
 
-Following is the demonstration of the test application for the 'Bare-Metal RTOS' project in action. 
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/MYxrrz4UWkc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+Click the following link to see the test application for the 'Bare-Metal RTOS' project in action: [https://www.youtube.com/embed/MYxrrz4UWkc](https://www.youtube.com/embed/MYxrrz4UWkc)
 
 - Scheduling Algorithm: Round-Robin 
 - 4 tasks blinking each LED at a defined frequency:
