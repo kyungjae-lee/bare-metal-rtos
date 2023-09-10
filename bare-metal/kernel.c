@@ -52,7 +52,6 @@ void schedule(void)
 	ICSR |= PENDSVSET;
 } /* End of schedule */
 
-/* /
 /* 
  * block_task()
  * Brief	: Blocks the task that calls this function for tick_count ticks 
