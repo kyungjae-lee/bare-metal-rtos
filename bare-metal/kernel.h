@@ -1,9 +1,9 @@
-/*****************************************************************************************
- * @ File name		: kernel.h
- * @ Description	: Interface for RTOS kernel
- * @ Author			: Kyungjae Lee
- * @ Date created	: 05/04/2023
- ****************************************************************************************/
+/*******************************************************************************
+ * File		: kernel.h
+ * Brief	: Interface for RTOS kernel
+ * Author	: Kyungjae Lee
+ * Date		: 05/04/2023
+ ******************************************************************************/
 
 #ifndef KERNEL_H
 #define KERNEL_H
@@ -38,17 +38,21 @@
 
 /* Disable interrupts */
 #define DISABLE_INTERRUPTS()	do { __asm volatile ("CPSID i"); } while (0)
-	/* To disable interrupts for ARM Cortex-M4 processor, you can use the "CPSID i" assembly instruction.
-	   This instruction sets the "PRIMASK" register to disable all interrupts, including the non-maskable
+	/* To disable interrupts for ARM Cortex-M4 processor, you can use the 
+	   "CPSID i" assembly instruction. This instruction sets the "PRIMASK" 
+	   register to disable all interrupts, including the non-maskable 
 	   interrupt (NMI). */
-	/* The do-while loop construct ensures that the macro expands to a single statement,
-	   even if it is used in a context where multiple statements are expected
-	   (e.g., as the body of an if statement). The while (0) part of the loop is there to ensure that
-	   the macro can be used safely in compound statements without generating syntax errors. */
+	/* The do-while loop construct ensures that the macro expands to a single 
+	   statement, even if it is used in a context where multiple statements are 
+	   expected (e.g., as the body of an if statement). The while (0) part of 
+	   the loop is there to ensure that the macro can be used safely in compound
+	   statements without generating syntax errors. */
 	/* Another way of writing DISABLE_INTERRUPTS() is as follows:
 	   do { __asm volatile ("mov r0, #0x1"); asm volatile ("mrs primask, r0"); } while (0)
-	   In this case, using do-while statement helps ensuring that the compound statements in the body
-	   expand to a single statement, as we put parens around every single macro variables. */
+	   In this case, using do-while statement helps ensuring that the compound 
+	   statements in the body expand to a single statement, as we put parens 
+	   around every single macro variables. */
+
 /* Enable interrupts */
 #define ENABLE_INTERRUPTS() 	do { __asm volatile ("CPSIE i"); } while (0)
 	/* Another way of writing DISABLE_INTERRUPTS() is as follows:
@@ -87,4 +91,4 @@ void create_tasks(void (*t1_handler)(void),
 				  void (*t4_handler)(void));
 void block_task(uint32_t tick_count);
 
-#endif
+#endif /* kernel.h */

@@ -1,9 +1,9 @@
-/*****************************************************************************************
- * @ File name		: kernel.c
- * @ Description	: Implementation of RTOS kernel
- * @ Author			: Kyungjae Lee
- * @ Date created	: 05/04/2023
- ****************************************************************************************/
+/*******************************************************************************
+ * File		: kernel.c
+ * Brief	: Implementation of RTOS kernel
+ * Author	: Kyungjae Lee
+ * Date		: 05/04/2023
+ ******************************************************************************/
 
 #include <stdint.h>
 #include <stdio.h>
@@ -23,26 +23,47 @@ typedef struct
 	void (*task_handler)(void);		/* Function pointer to task handler */
 } TCB_t;
 
+/* Array to manage task control block handles */
 TCB_t tcbs[NUM_TASKS];
 
-/* Idle task handler */
+/* 
+ * Idle task handler()
+ * Brief	: Idle task handler
+ * Param	: None
+ * Retval	: None
+ * Note		: Idle task will run only when all other user tasks are in BLOCKED
+ * 			  state.
+ */
 void idle_task_handler(void)
 {
-	/* Idle task will run only when all other user tasks are in BLOCKED state */
 	while (1);
-}
+} /* End of idle_task_handler */
 
-/* Trigger context switching by setting the PendSV exception */
+/* 
+ * schedule()
+ * Brief	: Triggers context switching by setting the PendSV exception
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void schedule(void)
 {
 	/* Pend the PendSV exception */
 	ICSR |= PENDSVSET;
-}
+} /* End of schedule */
 
-/* Blocks the task that calls this function for tick_count ticks */
+/* /
+/* 
+ * block_task()
+ * Brief	: Blocks the task that calls this function for tick_count ticks 
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void block_task(uint32_t tick_count)
 {
-	/* To prevent race condition on global variables, make sure to globally disable interrupt */
+	/* To prevent race condition on global variables, make sure to globally 
+	   disable interrupt */
 	DISABLE_INTERRUPTS();
 		/* Now, until ENABLE_INTERRUPT, only Thread mode code will run. */
 
@@ -61,9 +82,15 @@ void block_task(uint32_t tick_count)
 
 	/* Globally enable interrupt */
 	ENABLE_INTERRUPTS();
-}
+} /* End of block_task */
 
-/* Initializes SysTick Timer */
+/*
+ * init_systick_timer()
+ * Brief	: Initializes SysTick Timer
+ * Param	: @tick_hz
+ * Retval	: None
+ * Note		: N/A
+ */
 void init_systick_timer(uint32_t tick_hz)
 {
 	uint32_t start_val = (SYSTICK_TIM_CLK / tick_hz) - 1;
@@ -79,29 +106,56 @@ void init_systick_timer(uint32_t tick_hz)
 		/* TICKINT	: Enable SysTick exception request */
 		/* CLKSOURCE: Specify clock source; processor clock source */
 		/* ENABLE	: Enable counter */
-}
+} /* End of init_systick_timer */
 
-/* Initializes stack of scheduler */
+/* 
+ * init_sched_stack()
+ * Brief	: Initializes stack of scheduler
+ * Param	: @sched_top_of_stack
+ * Retval	: None
+ * Note		: N/A
+ */
 __attribute__((naked)) void init_sched_stack(uint32_t sched_top_of_stack)
 {
 	//__asm volatile("msr msp, r0");
 	__asm volatile("msr msp, %0": : "r" (sched_top_of_stack) : );
 	__asm volatile("bx lr");	/* Return to the caller */
-}
+} /* End of init_sched_stack */
 
+/* 
+ * get_psp()
+ * Brief	: Retrieves the current task's psp value from its TCB
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 uint32_t get_psp(void)
 {
 	return tcbs[curr_task].psp;
-}
+} /* End of get_psp */
 
+/* 
+ * save_psp()
+ * Brief	: Saves the current task's psp value to its TCB
+ * Param	: @curr_psp - current tasks's psp value
+ * Retval	: None
+ * Note		: N/A
+ */
 void save_psp(uint32_t curr_psp)
 {
 	tcbs[curr_task].psp = curr_psp;
-}
+} /* End of save_psp */
 
+/* 
+ * set_sp_to_psp()
+ * Brief	: Sets the stack pointer to PSP
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 __attribute__((naked)) void set_sp_to_psp(void)
 {
-	/* 1. Initialize the PSP with Task1_STACK_START */
+	/* 1. Initialize the PSP with Task1_STACK_START --------------------------*/
 	__asm volatile("push {lr}"); 	/* Secure LR before making a nested subroutine call */
 	__asm volatile("bl get_psp");	/* Get the PSP of the current task */
 	__asm volatile("msr psp, r0");	/* Initialize PSP; By AAPCS, r0 will contain Task1_STACK_START */
@@ -111,8 +165,18 @@ __attribute__((naked)) void set_sp_to_psp(void)
 	__asm volatile("mov r0, #0x02");
 	__asm volatile("msr control, r0");
 	__asm volatile("bx lr");
-}
+} /* End of set_sp_to_psp */
 
+/* 
+ * create_tasks()
+ * Brief	: Create four tasks
+ * Param	: @t1_handler - Pointer to task1 handler
+ * 			: @t2_handler - Pointer to task2 handler
+ * 			: @t3_handler - Pointer to task3 handler
+ * 			: @t4_handler - Pointer to task4 handler
+ * Retval	: None
+ * Note		: N/A
+ */
 void create_tasks(void (*t1_handler)(void),
 				  void (*t2_handler)(void),
 				  void (*t3_handler)(void),
@@ -153,22 +217,25 @@ void create_tasks(void (*t1_handler)(void),
 		/* PC */
 		p_psp--;
 		*p_psp = (uint32_t)tcbs[i].task_handler;
-			/* Since ARM Cortex-M4 processor operates only in Thumb state, it's also a
-			   good practice to check if the address of all task handlers is odd. */
+			/* Since ARM Cortex-M4 processor operates only in Thumb state, it's 
+			   also a good practice to check if the address of all task handlers
+			   is odd. */
 
 		/* LR */
 		p_psp--;
 		*p_psp = 0xFFFFFFFD;
 			/* EXC_RETURN[31:0] - Exception return behavior
-			   0xFFFFFFFD: Return to Thread mode, exception return uses non-floating point state from the PSP
-			   and execution uses PSP after return. -> Matches our environment! */
+			   0xFFFFFFFD: Return to Thread mode, exception return uses 
+			   non-floating point state from the PSP and execution uses PSP 
+			   after return. -> Matches our environment! */
 
 		/* Set r0-r12 to 0 (optional) */
 		/*
 		for (int j = 0; j < 13; j++)
 		{
 			p_psp--;
-			// *p_psp = 0; // Don't know why this is setting p_psp to 0. (Debug needed)
+			// *p_psp = 0; // Don't know why this is setting p_psp to 0. 
+			// (Debug needed)
 		}
 		*/
 		p_psp -= 13;	/* space for r0-r12 */
@@ -176,9 +243,16 @@ void create_tasks(void (*t1_handler)(void),
 		/* Save the taks's PSP value for later use */
 		tcbs[i].psp = (uint32_t)p_psp;
 	}
-}
+} /* End of create_tasks */
 
-/* Selects the next available task based on the Round-Robin scheduling policy */
+/* 
+ * select_next_task()
+ * Brief	: Selects the next available task based on the Round-Robin 
+ * 			  scheduling policy 
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void select_next_task()
 {
 	int state = BLOCKED;
@@ -204,21 +278,28 @@ void select_next_task()
 	{
 		curr_task = 0;
 	}
-}
+} /* End of select_next_task */
 
-/* Performs context switching */
+/* 
+ * PendSV_Handler()
+ * Brief	: Performs context switching
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 __attribute__((naked)) void PendSV_Handler(void)
 {
-	/* SF1(r0-r3, r12, lr, pc, xpsr) of the current task are automatically pushed onto its
-	   stack by the processor as exception ENTRY sequence. (i.e., Stacking) */
+	/* SF1(r0-r3, r12, lr, pc, xpsr) of the current task are automatically 
+	   pushed onto its stack by the processor as exception ENTRY sequence. 
+	   (i.e., Stacking) */
 
 	/* CAUTION!
-	   You are in an EXCEPTION HANDLER, which uses MSP. When you use push/pop operation
-	   in this handler, MSP will be affected! */
+	   You are in an EXCEPTION HANDLER, which uses MSP. When you use push/pop 
+	   operation in this handler, MSP will be affected! */
 
-	/*************************************************************************************
+	/***************************************************************************
 	 * PART1: Task switching out (Save the context of the current task)
-	 ************************************************************************************/
+	 **************************************************************************/
 
 	/* 1. Get the current task's PSP */
 	__asm volatile("mrs r0, psp");
@@ -227,18 +308,19 @@ __attribute__((naked)) void PendSV_Handler(void)
 	__asm volatile("stmdb r0!, {r4-r11}"); 	/* Register to memory */
 		/* STMDB: STore Multiple registers. Decrement address Before each access.
 		   !	: An optional writeback suffix. If ! is present the final address,
-				  that is loaded from or stored to, is written back into the base register.
-				  In this case, r0. */
+				  that is loaded from or stored to, is written back into the base
+				  register. In this case, r0. */
 
 	/* 3. Save the updated PSP of the current task */
 	__asm volatile("push {lr}");
 		/* Secure LR before making a nested subroutine call. Here LR contains
-		   (EXC_RETURN[31:0] - 0xFFFFFFFD) that is updated at the exception entry sequence. */
+		   (EXC_RETURN[31:0] - 0xFFFFFFFD) that is updated at the exception 
+		   entry sequence. */
 	__asm volatile("bl save_psp");
 
-	/*************************************************************************************
+	/***************************************************************************
 	 * PART2: Task switching in (Restore the context of the next task)
-	 ************************************************************************************/
+	 **************************************************************************/
 
 	/* 1. Choose the next task to run */
 	__asm volatile("bl select_next_task");
@@ -249,9 +331,9 @@ __attribute__((naked)) void PendSV_Handler(void)
 	/* 3. Restore SF2(r4-r11) of the next task by using its PSP */
 	__asm volatile("ldmia r0!, {r4-r11}");	/* Memory to register */
 		/* LDMIA: LoaD Multiple registers. Increment address After each access.
-		   !	: An optional writeback suffix. If ! is present the final address,
-				  that is loaded from or stored to, is written back into the base register.
-				  In this case, r0. */
+		   !	: An optional writeback suffix. If ! is present the final 
+		   		  address, that is loaded from or stored to, is written back 
+				  into the base register. In this case, r0. */
 
 	/* 4. Update PSP */
 	__asm volatile("msr psp, r0");	/* Now PSP points to the stack of the task switched in */
@@ -260,11 +342,19 @@ __attribute__((naked)) void PendSV_Handler(void)
 
 	__asm volatile("bx lr");
 
-	/* SF1(r0-r3, r12, lr, pc, xpsr) of the current task are automatically popped out of its
-	   stack and restored by the processor as exception EXIT sequence. (i.e., UnstackingG) */
-}
+	/* SF1(r0-r3, r12, lr, pc, xpsr) of the current task are automatically 
+	   popped out of its stack and restored by the processor as exception EXIT 
+	   sequence. (i.e., UnstackingG) */
+} /* End of PendSV_Handler */
 
-/* Checks all the tasks' states and unblock all the tasks that are qualified */
+/* 
+ * unblock_tasks()
+ * Brief	: Checks all the tasks' states and unblock all the tasks that are 
+ * 			  qualified 
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void unblock_tasks(void)
 {
 	for (int i = 1; i < NUM_TASKS; i++)
@@ -278,10 +368,16 @@ void unblock_tasks(void)
 			}
 		}
 	}
-}
+} /* End of unblock_tasks */
 
-/* Increments the global tick count, unblocks qualified tasks, and pends the PendSV exception
-   to trigger context switching */
+/* 
+ * SysTick_Handler()
+ * Brief	: Increments the global tick count, unblocks qualified tasks, and 
+ * 			  pends the PendSV exception to trigger context switching 
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void SysTick_Handler(void)
 {
 	/* Increment the global tick count */
@@ -292,9 +388,16 @@ void SysTick_Handler(void)
 
 	/* Pend the PendSV exception */
 	ICSR |= PENDSVSET;
-}
+} /* End of SysTick_Handler */
 
-/* Enable all configurable exceptions (i.e., UsageFault, MemManage, BusFault) */
+/* 
+ * enable_processor_faults()
+ * Brief	: Enable all configurable exceptions (i.e., UsageFault, MemManage, 
+ * 			  BusFault) 
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void enable_processor_faults(void)
 {
 	SHCSR |= USGFAULTENA;	/* Enable UsageFault */
@@ -304,31 +407,55 @@ void enable_processor_faults(void)
 	/* Since the kernel performs various memory access enabling these faults will help us
 	 * track down the issues.
 	 */
-}
+} /* End of enable_processor_faults *.
 
-/* HardFault handler */
+/* 
+ * HardFault_Handler()
+ * Brief	: HardFault handler 
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void HardFault_Handler(void)
 {
 	printf("Exception: HardFault\n");
 	while (1);
-}
+} /* End of HardFault_Handler() */
 
-/* MemManage handler */
+/* 
+ * MemManage_Handler()
+ * Brief	: MemManage handler 
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void MemManage_Handler(void)
 {
 	printf("Exception: HardFault\n");
 	while (1);
-}
+} /* End of MemManage_Handler() */
 
-/* BusFault handler */
+/* 
+ * BusFault_Handler()
+ * Brief	: BusFault handler 
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void BusFault_Handler(void)
 {
 
 	printf("Exception: BusFault\n");
 	while (1);
-}
+} /* End of BusFault_Handler() */
 
-/* Does necessary initializations and starts the kernel */
+/* 
+ * start_kernel()
+ * Brief	: Does necessary initializations and starts the kernel 
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void start_kernel(void)
 {
 	enable_processor_faults();
@@ -341,4 +468,4 @@ void start_kernel(void)
 
 	/* Invoke task1_handler */
 	(tcbs[1].task_handler)();
-}
+} /* End of start_kernel */
