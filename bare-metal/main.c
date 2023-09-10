@@ -1,9 +1,9 @@
-/*****************************************************************************************
- * @ File name		: main.c
- * @ Description	: Test driver RTOS kernel
- * @ Author			: Kyungjae Lee
- * @ Date created	: 04/11/2023
- ****************************************************************************************/
+/*******************************************************************************
+ * File		: main.c
+ * Brief	: Application to test RTOS kernel functionality
+ * Author	: Kyungjae Lee
+ * Date		: 04/11/2023
+ ******************************************************************************/
 
 #include <stdint.h>
 #include <stdio.h>
@@ -36,12 +36,17 @@ int main(void)
 
     /* Loop forever */
 	for(;;);
-}
+} /* End of main */
 
-/* Task 1 handler */
+/* 
+ * task1_handler()
+ * Brief	: Toggles green LED every 1000 ms
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void task1_handler(void)
 {
-	/* Toggle green LED every 1000 ms */
 	while (1)
 	{
 		printf("Task 1\n");
@@ -50,12 +55,17 @@ void task1_handler(void)
 		led_green_off();
 		block_task(1000);
 	}
-}
+} /* End of task1_handler */
 
-/* Task 2 handler */
+/* 
+ * task2_handler()
+ * Brief	: Toggles orange LED every 500 ms
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void task2_handler(void)
 {
-	/* Toggle orange LED every 500 ms */
 	while (1)
 	{
 		printf("Task 2\n");
@@ -64,12 +74,17 @@ void task2_handler(void)
 		led_orange_off();
 		block_task(500);
 	}
-}
+} /* End of task2_handler */
 
-/* Task 3 handler */
+/* 
+ * task3_handler()
+ * Brief	: Toggles blue LED every 250 ms
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void task3_handler(void)
 {
-	/* Toggle blue LED every 250 ms */
 	while (1)
 	{
 		printf("Task 3\n");
@@ -78,12 +93,17 @@ void task3_handler(void)
 		led_blue_off();
 		block_task(250);
 	}
-}
+} /* End of task3_handler */
 
-/* Task 4 handler */
+/* 
+ * task4_handler()
+ * Brief	: Toggles red LED every 250 ms
+ * Param	: None
+ * Retval	: None
+ * Note		: N/A
+ */
 void task4_handler(void)
 {
-	/* Toggle red LED every 125 ms */
 	while (1)
 	{
 		printf("Task 4\n");
@@ -92,4 +112,4 @@ void task4_handler(void)
 		led_red_off();
 		block_task(125);
 	}
-}
+} /* End of task4_handler */
